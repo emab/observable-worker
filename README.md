@@ -50,7 +50,7 @@ Create an instance of `ObservableWorker` and use it to add handlers and run task
 ```typescript
 import { ObservableWorker, WorkerHandler } from "observable-worker";
 
-const worker = new ObservableWorker(new URL("/worker.ts", import.meta.url));
+const worker = new ObservableWorker(new URL("/worker.js", import.meta.url));
 
 const handler: WorkerHandler<number, number> = (data) => {
   return data * 2;
@@ -64,6 +64,34 @@ const task$ = worker
     console.log("Result:", result); // Output: Result: 10
   });
 ```
+
+### Using in a Redux Observable Epic
+
+You can use worker tasks inside Redux Observable epics to easily handle asynchronous tasks:
+
+```typescript
+// observableWorker.ts
+const observableWorker = new ObservableWorker(new URL("/worker.js", import.meta.url));
+
+export const fibTask = observableWorker.createWorkerTask("fibonacci", (n: number) => {
+  const fib = (n: number): number => {
+    if (n <= 1) {
+      return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+  };
+
+  return fib(n);
+});
+
+// epics.ts
+const doCalculationEpic: Epic = (action$) => action$.pipe(
+  filter(startCalculation.match),
+  mergeMap(() => fibTask(20)),
+  map(setData)
+);
+````
+
 
 ### Setting Log Level
 

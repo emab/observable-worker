@@ -6,6 +6,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint ."
   },
+  "homepage": "https://github.com/emab/observable-worker",
+  "repository": "https://github.com/emab/observable-worker",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
