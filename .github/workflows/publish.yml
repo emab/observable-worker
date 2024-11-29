@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   bump-build-publish:
     runs-on: ubuntu-latest
@@ -38,11 +41,8 @@ jobs:
 
       - name: Bump version
         if: steps.check_version_bump.outputs.skip_bump == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
         run: |
           npm version patch -m "chore(release): %s"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/emab/observable-worker.git
           git push origin main --follow-tags
 
       - name: Build project
