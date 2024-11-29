@@ -42,6 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           npm version patch -m "chore(release): %s"
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/emab/observable-worker.git
           git push origin main --follow-tags
 
       - name: Build project
