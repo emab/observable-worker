@@ -1,0 +1,46 @@
+name: Bump Version, Build, and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-build-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check if last commit was a version bump
+        id: check_version_bump
+        run: |
+          if git log -1 --pretty=%B | grep -q 'chore(release):'; then
+            echo "Version bump detected, skipping version bump step."
+            echo "::set-output name=skip_bump::true"
+          else
+            echo "::set-output name=skip_bump::false"
+          fi
+
+      - name: Bump version
+        if: steps.check_version_bump.outputs.skip_bump == 'false'
+        run: |
+          npm version patch -m "chore(release): %s"
+          git push origin main --follow-tags
+
+      - name: Build project
+        run: npm run build
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
