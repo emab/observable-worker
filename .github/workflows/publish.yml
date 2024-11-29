@@ -21,6 +21,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "eddybrown@me.com"
+          git config --global user.name "Eddy Brown"
+
       - name: Check if last commit was a version bump
         id: check_version_bump
         run: |
