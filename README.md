@@ -4,6 +4,9 @@
 using RxJS observables. This library allows you to dynamically add handlers to the worker and run tasks, receiving
 responses as observables.
 
+This has been designed and tested to work with a Vite React project, however it should work as long as the worker
+correctly inlines the setup code.
+
 ## Installation
 
 To install the library, use npm:
@@ -14,66 +17,20 @@ npm install observable-worker
 
 ## Usage
 
-### Add worker code
+### Add task handlers
 
-The worker code needs to be added to your applications `public` directory. There are two ways of doing this:
+Task handlers define how a task is processed in the worker. You can create a task handler using the `createTaskHandler`
+helper function:
 
-1. Manually copy the worker code from the `dist` folder to the `public` directory. This method is not recommended as it
-   requires manual intervention every time the worker package is updated.
-2. Use a plugin like `rollup-plugin-copy` to automatically copy these files to the `public` directory.
+A tasks name should be unique, and is used to identify the task in the worker.
 
-E.g.
-
-```typescript
-import { defineConfig } from "vite";
-import copy from "vite-plugin-static-copy";
-
-export default defineConfig({
-  plugins: [
-    copy({
-      targets: [
-        {
-          src: "node_modules/observable-worker/dist/worker.js",
-          dest: "public",
-        },
-      ],
-      hook: "buildStart",
-    }),
-  ],
-});
-```
-
-### Using the ObservableWorker
-
-Create an instance of `ObservableWorker` and use it to add handlers and run tasks:
+Tasks can also return a promise, which will be resolved in the worker and sent back to the main thread as an observable.
 
 ```typescript
-import { ObservableWorker, WorkerHandler } from "observable-worker";
+import { createTaskHandler } from "observable-worker";
 
-const worker = new ObservableWorker(new URL("/worker.js", import.meta.url));
-
-const handler: WorkerHandler<number, number> = (data) => {
-  return data * 2;
-};
-
-worker.createWorkerTask("double", handler);
-
-const task$ = worker
-  .runTask<number, number>("double", 5)
-  .subscribe((result) => {
-    console.log("Result:", result); // Output: Result: 10
-  });
-```
-
-### Using in a Redux Observable Epic
-
-You can use worker tasks inside Redux Observable epics to easily handle asynchronous tasks:
-
-```typescript
-// observableWorker.ts
-const observableWorker = new ObservableWorker(new URL("/worker.js", import.meta.url));
-
-export const fibTask = observableWorker.createWorkerTask("fibonacci", (n: number) => {
+// tasks.ts
+export const fibonacci = createTaskHandler("fibonacci", (n: number) => {
   const fib = (n: number): number => {
     if (n <= 1) {
       return n;
@@ -83,15 +40,54 @@ export const fibTask = observableWorker.createWorkerTask("fibonacci", (n: number
 
   return fib(n);
 });
+```
+
+### Setup worker
+
+Create a file for the worker code. The `setupWorker` function initializes the worker and adds the task handlers:
+
+```typescript
+// worker.ts
+import { setupWorker } from "observable-worker";
+import { fibonacci } from "./tasks";
+
+setupWorker([fibonacci]);
+```
+
+### Initialise using ObservableWorker
+
+Initialise your worker, making sure to include `{ type: "module" }` in the worker constructor options. Then pass the
+worker to the `ObservableWorker` constructor:
+
+```typescript
+import { ObservableWorker, WorkerHandler } from "observable-worker";
+import { fibonacci } from "./tasks";
+
+const worker = new Worker(new URL("/worker.ts", import.meta.url), { type: "module" });
+const observableWorker = new ObservableWorker(worker);
+
+const fibonacciTask = observableWorker
+  .runTask(fibonacci, 10)
+  .subscribe((result) => {
+    console.log("Result:", result); // Output: Result: 55
+  });
+```
+
+### Using in a Redux Observable Epic
+
+You can use worker tasks inside Redux Observable epics to easily handle asynchronous tasks:
+
+```typescript
+// observableWorker.ts
+const observableWorker = new ObservableWorker(new Worker(new URL("/worker.ts", import.meta.url), { type: "module" }));
 
 // epics.ts
 const doCalculationEpic: Epic = (action$) => action$.pipe(
   filter(startCalculation.match),
-  mergeMap(() => fibTask(20)),
+  mergeMap(() => observableWorker.runTask(fibonacci, 10)),
   map(setData)
 );
 ````
-
 
 ### Setting Log Level
 
