@@ -11,19 +11,26 @@ permissions:
 jobs:
   bump-build-publish:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        node-version: [24]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: '22'
-          registry-url: "https://registry.npmjs.org"
-
+          version: 10
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
+
+      - name: Run tests
+        run: pnpm test
 
       - name: Configure Git
         run: |

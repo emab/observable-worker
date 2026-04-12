@@ -19,10 +19,8 @@ npm install observable-worker
 
 ### Add task handlers
 
-Task handlers define how a task is processed in the worker. You can create a task handler using the `createTaskHandler`
+Task handlers define how a task is processed in the worker. You create a task handler using the `createTaskHandler`
 helper function:
-
-A tasks name should be unique, and is used to identify the task in the worker.
 
 Tasks can also return a promise, which will be resolved in the worker and sent back to the main thread as an observable.
 
@@ -30,7 +28,7 @@ Tasks can also return a promise, which will be resolved in the worker and sent b
 import { createTaskHandler } from "observable-worker";
 
 // tasks.ts
-export const fibonacci = createTaskHandler("fibonacci", (n: number) => {
+export const fibonacci = createTaskHandler((n: number) => {
   const fib = (n: number): number => {
     if (n <= 1) {
       return n;

@@ -1,5 +1,6 @@
 import {  Observable, Subject } from "rxjs";
-import { LogLevel, NamedTaskHandler, RunTaskMessage } from "./types";
+import { LogLevel, RunTaskMessage, RegisteredTaskHandler } from "./types";
+import { R } from "vitest/dist/chunks/config.d.ChUh6-ad.js";
 
 export class ObservableWorker {
   private worker: Worker;
@@ -15,15 +16,15 @@ export class ObservableWorker {
    * Runs a task in the worker and returns an Observable for the response.
    */
   runTask<Input, Output>(
-    task: NamedTaskHandler<Input, Output>,
+    task: RegisteredTaskHandler<Input, Output> | Pick<RegisteredTaskHandler<Input, Output>, "handlerId">,
     payload: Input
   ): Observable<Output> {
     const subject = new Subject<Output>();
 
     const id = this.generateUniqueId();
     this.messageHandlers.set(id, subject as Subject<unknown>);
-    this.log(LogLevel.INFO, "Task started:", task.name, id);
-    this.worker.postMessage({ type: "runTask", id, name: task.name, payload } satisfies RunTaskMessage);
+    this.log(LogLevel.INFO, "Task started:", id, task.handlerId);
+    this.worker.postMessage({ type: "runTask", id, handlerId: task.handlerId, payload } satisfies RunTaskMessage);
 
     return subject.asObservable();
   }

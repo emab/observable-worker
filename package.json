@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b && vite build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest"
   },
   "homepage": "https://github.com/emab/observable-worker",
   "repository": "https://github.com/emab/observable-worker",
@@ -18,7 +19,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "rxjs": "^7"
+    "rxjs": "7.8.2"
   },
   "peerDependencies": {
     "rxjs": "^7"
@@ -28,12 +29,13 @@
     "@types/node": "^22.10.1",
     "ajv": "^8.17.1",
     "eslint": "^9.15.0",
-    "prettier": "^3.4.1",
     "globals": "^15.12.0",
+    "prettier": "^3.4.1",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.15.0",
     "vite": "^6.0.1",
-    "vite-plugin-dts": "^4.3.0"
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^3.2.4"
   },
   "files": [
     "src",

@@ -1,11 +1,10 @@
-import { NamedTaskHandler, TaskHandler } from "./types.ts";
+import { RegisteredTaskHandler, TaskHandler } from "./types.ts";
 
 export function createTaskHandler<Input, Output>(
-  name: string,
   handler: TaskHandler<Input, Output>
-): NamedTaskHandler<Input, Output> {
+): RegisteredTaskHandler<Input, Output> {
   return {
-    name,
+    handlerId: crypto.randomUUID(),
     handler,
   };
 }
