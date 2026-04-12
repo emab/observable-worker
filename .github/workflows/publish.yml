@@ -11,54 +11,67 @@ permissions:
 jobs:
   bump-build-publish:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24]
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
-      - name: Use Node.js ${{ matrix.node-version }}
+
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests
         run: pnpm test
 
       - name: Configure Git
         run: |
-          git config --global user.email "eddybrown@me.com"
-          git config --global user.name "Eddy Brown"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Check if last commit was a version bump
         id: check_version_bump
         run: |
-          if git log -1 --pretty=%B | grep -q 'chore(release):'; then
-            echo "Version bump detected, skipping version bump step."
-            echo "::set-output name=skip_bump::true"
+          if git log -1 --pretty=%B | grep -q '^chore(release):'; then
+            echo "skip_bump=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=skip_bump::false"
+            echo "skip_bump=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Show git status before bump
+        if: steps.check_version_bump.outputs.skip_bump == 'false'
+        run: |
+          git status --porcelain
+          git diff -- package.json pnpm-lock.yaml || true
 
       - name: Bump version
         if: steps.check_version_bump.outputs.skip_bump == 'false'
-        run: |
-          npm version patch -m "chore(release): %s"
-          git push origin main --follow-tags
+        run: npm version patch -m "chore(release): %s"
+
+      - name: Push commit and tag
+        if: steps.check_version_bump.outputs.skip_bump == 'false'
+        run: git push origin main --follow-tags
+
+      - name: Install dependencies after version bump
+        if: steps.check_version_bump.outputs.skip_bump == 'false'
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
-        run: npm run build
+        run: pnpm run build
 
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
