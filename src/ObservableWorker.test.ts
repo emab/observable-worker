@@ -167,7 +167,7 @@ describe("ObservableWorker", () => {
         const worker = createWorkerMock();
         const consoleSpy = vi.spyOn(console, "log");
         
-        const observableWorker = new ObservableWorker(worker as unknown as Worker);
+        new ObservableWorker(worker as unknown as Worker);
 
         worker.onmessage?.({
             data: { id: "unknown-task-id", payload: "response" },

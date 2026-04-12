@@ -1,6 +1,5 @@
 import {  Observable, Subject } from "rxjs";
 import { LogLevel, RunTaskMessage, RegisteredTaskHandler } from "./types";
-import { R } from "vitest/dist/chunks/config.d.ChUh6-ad.js";
 
 export class ObservableWorker {
   private worker: Worker;
